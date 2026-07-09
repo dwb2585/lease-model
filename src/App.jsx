@@ -26,7 +26,7 @@ const MOVE_RENT = [15, 18, 25, 27, 28.35, 29.48, 30.66, 31.89, 33.17, 34.49]; //
 const STAY_RENT_Y1 = 28; // Option A per July 7 LOI, 3% bumps
 const AMBER_MRR = 52578; // 325 existing ($46,453) + 25 new @ $245
 const JEN_COMP = 110000; // full-time salary + payroll burden
-const P3_COMP = 110000;  // third provider, fully loaded (PA-level)
+const P3_COMP = 110000;  // third provider default, fully loaded (PA-level)
 const AMBER_SALARY = 120000; // Dr. Wobbekind W-2, for the target line
 const FIXED_OH = 95000;  // from YTD 2026 P&L, ex-rent ex-payroll
 const VAR_PP = 10;       // variable cost / patient / month (COGS)
@@ -37,7 +37,7 @@ const fmt$ = (v) => (v < 0 ? "-" : "") + "$" + Math.round(Math.abs(v)).toLocaleS
 
 // ---------- model ----------
 function simulate(p) {
-  const { adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds } = p;
+  const { adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds, p3Salary } = p;
   const moveRent = [...MOVE_RENT];
   moveRent[1] = y2Rent;
   const jStart = Math.min(36 + adds * 10, moveCap); // panel at Aug 2027 commencement
@@ -59,7 +59,7 @@ function simulate(p) {
         panelSum += panel;
         if (gapLeft > 0) { gapLeft--; }
         else { jenCost += JEN_COMP / 12; panel = Math.min(panel + adds, cap); }
-        if (p3Active) { p3Cost += P3_COMP / 12; panel3 = Math.min(panel3 + p3Adds, 350); }
+        if (p3Active) { p3Cost += p3Salary / 12; panel3 = Math.min(panel3 + p3Adds, 350); }
       }
       const opexPSF = opexBase * Math.pow(1 + opexEsc / 100, y + 1);
       const occ = isMove
@@ -186,11 +186,12 @@ export default function App() {
   const [p3Year, setP3Year] = useState(0);
   const [p3Rate, setP3Rate] = useState(160);
   const [p3Adds, setP3Adds] = useState(6);
+  const [p3Salary, setP3Salary] = useState(110000);
   const isMobile = useMediaQuery("(max-width: 720px)");
 
   const m = useMemo(
-    () => simulate({ adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds }),
-    [adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds]
+    () => simulate({ adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds, p3Salary }),
+    [adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds, p3Salary]
   );
   const target = AMBER_SALARY + dist * 12;
   const clearStay = m.stay.filter((r) => r.take >= target).length;
@@ -327,6 +328,7 @@ export default function App() {
               format={(v) => (v === 0 ? "Never" : "Y" + v)} />
             {p3Year > 0 && (<>
               <Slider label="Their patient rate" value={p3Rate} set={setP3Rate} min={100} max={250} step={5} format={(v) => "$" + v + "/mo"} />
+              <Slider label="Their salary (fully loaded)" value={p3Salary} set={setP3Salary} min={60000} max={250000} step={5000} format={(v) => "$" + (v / 1000) + "k/yr"} />
               <Slider label="Their net adds / month" value={p3Adds} set={setP3Adds} min={2} max={12} />
             </>)}
 
@@ -449,7 +451,7 @@ export default function App() {
         <footer style={{ fontSize: 12.5, color: C.inkSoft, lineHeight: 1.7, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
           <strong style={{ color: C.ink }}>Held constant in the model:</strong> Dr. Wobbekind at a full 350-patient panel
           ({fmt$(AMBER_MRR)}/mo MRR — 325 existing plus 25 new at $245) in both paths · Jennifer's comp $110k/yr
-          fully loaded · third provider comp $110k/yr fully loaded, panel capped at 350, move scenario only ·
+          fully loaded · third provider comp at the slider (default $110k/yr fully loaded), panel capped at 350, move scenario only ·
           MA $66k/yr escalating 3% from the chosen lease year · fixed overhead $95k/yr escalating 3% ·
           variable cost $10/patient/mo · stay = Option A at $28/SF + 3% bumps (July 7 LOI) ·
           move = Suite 280 phase-in schedule, 120-month term · commencement Aug 2027.
