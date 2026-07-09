@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ComposedChart, LineChart, Line, BarChart, Bar, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -87,6 +87,20 @@ function simulate(p) {
 }
 
 // ---------- small pieces ----------
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(
+    typeof window !== "undefined" && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const m = window.matchMedia(query);
+    const handler = (e) => setMatches(e.matches);
+    m.addEventListener("change", handler);
+    return () => m.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}
+
 function Slider({ label, value, set, min, max, step = 1, unit = "", format }) {
   return (
     <div style={{ marginBottom: 18 }}>
@@ -172,6 +186,7 @@ export default function App() {
   const [p3Year, setP3Year] = useState(0);
   const [p3Rate, setP3Rate] = useState(160);
   const [p3Adds, setP3Adds] = useState(6);
+  const isMobile = useMediaQuery("(max-width: 720px)");
 
   const m = useMemo(
     () => simulate({ adds, stayCap, moveCap, jRate, y2Rent, opexBase, opexEsc, maYear, depYear, gapMonths, p3Year, p3Rate, p3Adds }),
@@ -191,10 +206,40 @@ export default function App() {
       <style>{`
         input[type=range]{cursor:pointer}
         *:focus-visible{outline:2px solid ${C.brass};outline-offset:2px}
+
+        .lm-page{max-width:1060px;margin:0 auto;padding:36px 24px 64px}
+        .lm-masthead-side{font-size:12.5px;color:${C.inkSoft};text-align:right;line-height:1.6}
+        .lm-h1{font-family:'Fraunces',serif;font-size:34px;font-weight:700;margin:0;line-height:1.1}
+        .lm-verdict{padding:30px 0 26px;border-bottom:1px solid ${C.line};margin-bottom:28px}
+        .lm-verdict-main{display:flex;gap:40px;align-items:flex-end;flex-wrap:wrap}
+        .lm-verdict-metrics{display:flex;gap:32px;padding-bottom:6px;flex-wrap:wrap}
+        .lm-headline{font-family:'Fraunces',serif;font-weight:700;font-size:58px;line-height:1;font-variant-numeric:tabular-nums lining-nums}
+        .lm-headline.pos{color:${C.brassDeep}}
+        .lm-headline.neg{color:${C.danger}}
+        .lm-metric{font-family:'Fraunces',serif;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+        .lm-metric.move{color:${C.move}}
+        .lm-main-grid{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:24px;margin-bottom:24px}
+        .lm-assumptions{background:${C.card};border:1px solid ${C.line};border-radius:12px;padding:20px 20px 8px;align-self:start}
+        .lm-secondary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-bottom:24px}
+        .lm-ledger-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+        @media (max-width: 720px) {
+          .lm-page{padding:20px 16px 48px}
+          .lm-masthead-side{text-align:left;width:100%}
+          .lm-h1{font-size:26px}
+          .lm-verdict{padding:22px 0 20px;margin-bottom:20px}
+          .lm-verdict-main{gap:18px}
+          .lm-verdict-metrics{gap:20px 24px;width:100%;padding-bottom:0}
+          .lm-headline{font-size:44px}
+          .lm-metric{font-size:22px}
+          .lm-main-grid{grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+          .lm-secondary-grid{grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+          .lm-assumptions{padding:16px 16px 6px}
+        }
         @media print { .no-print { display:none } }
       `}</style>
 
-      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "36px 24px 64px" }}>
+      <div className="lm-page">
 
         {/* masthead */}
         <header style={{ borderBottom: `2px solid ${C.ink}`, paddingBottom: 18, marginBottom: 0 }}>
@@ -203,11 +248,11 @@ export default function App() {
               <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: C.brass, fontWeight: 600, marginBottom: 6 }}>
                 The Golden Stethoscope · Red Rocks Medical Center
               </div>
-              <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, margin: 0, lineHeight: 1.1 }}>
+              <h1 className="lm-h1">
                 Stay or move — the decision model
               </h1>
             </div>
-            <div style={{ fontSize: 12.5, color: C.inkSoft, textAlign: "right", lineHeight: 1.6 }}>
+            <div className="lm-masthead-side">
               Suite 260 (1,372 SF) vs Suite 280 (2,952 SF)<br />
               Terms per July 7 LOI · July 9 counter
             </div>
@@ -215,25 +260,22 @@ export default function App() {
         </header>
 
         {/* verdict band — the live headline */}
-        <section style={{ padding: "30px 0 26px", borderBottom: `1px solid ${C.line}`, marginBottom: 28 }}>
-          <div style={{ display: "flex", gap: 40, alignItems: "flex-end", flexWrap: "wrap" }}>
+        <section className="lm-verdict">
+          <div className="lm-verdict-main">
             <div>
               <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 4 }}>10-year advantage of moving</div>
-              <div style={{
-                fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 58, lineHeight: 1,
-                color: ahead ? C.brassDeep : C.danger, fontVariantNumeric: "tabular-nums lining-nums",
-              }}>
+              <div className={`lm-headline ${ahead ? "pos" : "neg"}`}>
                 {ahead ? "+" : "−"}{fmtM(Math.abs(m.diff))}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 32, paddingBottom: 6 }}>
+            <div className="lm-verdict-metrics">
               <div>
                 <div style={{ fontSize: 12.5, color: C.inkSoft }}>Owner take if you stay</div>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{fmtM(m.sTot)}</div>
+                <div className="lm-metric">{fmtM(m.sTot)}</div>
               </div>
               <div>
                 <div style={{ fontSize: 12.5, color: C.inkSoft }}>Owner take if you move</div>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: C.move, fontVariantNumeric: "tabular-nums" }}>{fmtM(m.mTot)}</div>
+                <div className="lm-metric move">{fmtM(m.mTot)}</div>
               </div>
               <div>
                 <div style={{ fontSize: 12.5, color: C.inkSoft }}>Years clearing target</div>
@@ -253,8 +295,8 @@ export default function App() {
         </section>
 
         {/* assumptions + main chart */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)", gap: 24, marginBottom: 24 }}>
-          <aside style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "20px 20px 8px", alignSelf: "start" }}>
+        <div className="lm-main-grid">
+          <aside className="lm-assumptions">
             <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 17, fontWeight: 600, margin: "0 0 16px" }}>Assumptions</h3>
 
             <Slider label="Jennifer net adds / month" value={adds} set={setAdds} min={2} max={12} />
@@ -306,7 +348,7 @@ export default function App() {
               { label: "Move", color: C.move },
               { label: "Salary + distribution target", color: C.brass, dash: true },
             ]} />
-            <div style={{ width: "100%", height: 330 }}>
+            <div style={{ width: "100%", height: isMobile ? 280 : 330 }}>
               <ResponsiveContainer>
                 <ComposedChart data={takeData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -325,13 +367,13 @@ export default function App() {
         </div>
 
         {/* secondary charts */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, marginBottom: 24 }}>
+        <div className="lm-secondary-grid">
           <ChartCard
             title="Monthly occupancy cost"
             note="Base rent plus pass-through OpEx, per the current LOI terms."
             height={0}>
             <LegendRow items={[{ label: "Stay — Suite 260", color: C.stay }, { label: "Move — Suite 280", color: C.move }]} />
-            <div style={{ width: "100%", height: 240 }}>
+            <div style={{ width: "100%", height: isMobile ? 220 : 240 }}>
               <ResponsiveContainer>
                 <BarChart data={occData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -350,7 +392,7 @@ export default function App() {
             note="Extra patients (at Jennifer's rate) needed to cover the occupancy gap, against her projected panel."
             height={0}>
             <LegendRow items={[{ label: "Jennifer's panel (year-end)", color: C.move }, { label: "Needed to break even", color: C.danger, dash: true }]} />
-            <div style={{ width: "100%", height: 240 }}>
+            <div style={{ width: "100%", height: isMobile ? 220 : 240 }}>
               <ResponsiveContainer>
                 <LineChart data={beData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -366,7 +408,7 @@ export default function App() {
         </div>
 
         {/* year-by-year ledger */}
-        <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "18px 20px", marginBottom: 24, overflowX: "auto" }}>
+        <div className="lm-ledger-wrap" style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "18px 20px", marginBottom: 24 }}>
           <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 17, fontWeight: 600, margin: "0 0 12px" }}>Year-by-year ledger</h3>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, fontVariantNumeric: "tabular-nums", minWidth: 720 }}>
             <thead>
