@@ -202,13 +202,42 @@ export default function App() {
         input[type=range]{cursor:pointer}
         *:focus-visible{outline:2px solid ${C.brass};outline-offset:2px}
         @media print { .no-print { display:none } }
+
+        .lm-page { max-width: 1060px; margin: 0 auto; padding: 36px 24px 64px; }
+        .lm-mast { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+        .lm-headline-row { display: flex; gap: 40px; align-items: flex-end; flex-wrap: wrap; }
+        .lm-headline-num { font-family: 'Fraunces', serif; font-weight: 700; font-size: 58px; line-height: 1; color: #7A5F22; font-variant-numeric: tabular-nums lining-nums; }
+        .lm-stats { display: flex; gap: 32px; padding-bottom: 6px; flex-wrap: wrap; }
+        .lm-assumptions { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 24px; margin-bottom: 24px; }
+        .lm-twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .lm-chart-tall { width: 100%; height: 330px; }
+        .lm-chart { width: 100%; height: 240px; }
+
+        @media (max-width: 860px) {
+          .lm-assumptions { grid-template-columns: 1fr; gap: 16px; }
+        }
+        @media (max-width: 720px) {
+          .lm-page { padding: 22px 14px 56px; }
+          .lm-mast { flex-direction: column; align-items: flex-start; gap: 6px; }
+          .lm-mast h1 { font-size: 28px !important; }
+          .lm-headline-row { flex-direction: column; align-items: flex-start; gap: 18px; }
+          .lm-headline-num { font-size: 44px; }
+          .lm-stats { gap: 16px 22px; padding-bottom: 0; }
+          .lm-twocol { grid-template-columns: 1fr; gap: 14px; }
+          .lm-chart-tall { height: 240px; }
+          .lm-chart { height: 200px; }
+        }
+        @media (max-width: 420px) {
+          .lm-page { padding: 18px 12px 48px; }
+          .lm-headline-num { font-size: 38px; }
+        }
       `}</style>
 
-      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "36px 24px 64px" }}>
+      <div className="lm-page">
 
         {/* masthead */}
         <header style={{ borderBottom: `2px solid ${C.ink}`, paddingBottom: 18 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+          <div className="lm-mast">
             <div>
               <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: C.brass, fontWeight: 600, marginBottom: 6 }}>
                 The Golden Stethoscope · Suite 280 · Red Rocks Medical Center
@@ -226,17 +255,14 @@ export default function App() {
 
         {/* headline band */}
         <section style={{ padding: "30px 0 26px", borderBottom: `1px solid ${C.line}`, marginBottom: 28 }}>
-          <div style={{ display: "flex", gap: 40, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <div className="lm-headline-row">
             <div>
               <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 4 }}>10-year owner take under this lease</div>
-              <div style={{
-                fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 58, lineHeight: 1,
-                color: C.brassDeep, fontVariantNumeric: "tabular-nums lining-nums",
-              }}>
+              <div className="lm-headline-num">
                 {fmtM(totTake)}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 32, paddingBottom: 6, flexWrap: "wrap" }}>
+            <div className="lm-stats">
               <div>
                 <div style={{ fontSize: 12.5, color: C.inkSoft }}>Years clearing target</div>
                 <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: C.teal, fontVariantNumeric: "tabular-nums" }}>
@@ -263,7 +289,7 @@ export default function App() {
         </section>
 
         {/* assumptions + owner take */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)", gap: 24, marginBottom: 24 }}>
+        <div className="lm-assumptions">
           <aside style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "20px 20px 8px", alignSelf: "start" }}>
             <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 17, fontWeight: 600, margin: "0 0 16px" }}>Assumptions</h3>
 
@@ -313,7 +339,7 @@ export default function App() {
               { label: "Owner take", color: C.teal },
               { label: "Salary + distribution target", color: C.brass, dash: true },
             ]} />
-            <div style={{ width: "100%", height: 330 }}>
+            <div className="lm-chart-tall">
               <ResponsiveContainer>
                 <ComposedChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -335,7 +361,7 @@ export default function App() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, marginBottom: 24 }}>
           <Card title="Monthly occupancy cost" note="Base rent per the LOI phase-in schedule, stacked with pass-through OpEx.">
             <LegendRow items={[{ label: "Base rent", color: C.teal }, { label: "OpEx pass-through", color: C.sage }]} />
-            <div style={{ width: "100%", height: 240 }}>
+            <div className="lm-chart">
               <ResponsiveContainer>
                 <BarChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -351,7 +377,7 @@ export default function App() {
 
           <Card title="Dr. Wobbekind's personal guaranty" note="The negotiated burn-down: flat through month 48, then stepping toward $41,685 by month 109.">
             <LegendRow items={[{ label: "Guaranteed amount at start of year", color: C.brass }]} />
-            <div style={{ width: "100%", height: 240 }}>
+            <div className="lm-chart">
               <ResponsiveContainer>
                 <ComposedChart data={guarantyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
@@ -374,7 +400,7 @@ export default function App() {
               { label: "Jennifer", color: C.teal },
               { label: "Provider 3", color: C.brass },
             ]} />
-            <div style={{ width: "100%", height: 240 }}>
+            <div className="lm-chart">
               <ResponsiveContainer>
                 <AreaChart data={panelData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke={C.line} vertical={false} />
